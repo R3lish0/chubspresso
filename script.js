@@ -161,8 +161,8 @@ function populateEditForm(entry) {
             </div>
             
             <div class="form-group">
-                <label for="editGrindSize">Grind Size (1-50) *</label>
-                <input type="number" id="editGrindSize" name="grindSize" value="${entry.grindSize}" min="1" max="50" required>
+                        <label for="editGrindSize">Grind Size (1-50) *</label>
+                        <input type="number" id="editGrindSize" name="grindSize" value="${entry.grindSize}" min="1" max="50" step="0.1" required>
             </div>
             
             <div class="form-group">
