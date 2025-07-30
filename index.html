@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chubspresso - Espresso Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Using traditional system fonts for earthy feel -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-coffee"></i> Chubspresso</h1>
+                <p>Track your espresso journey</p>
+            </div>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="tab-btn active" data-tab="entries">
+                <i class="fas fa-list"></i> Entries
+            </button>
+            <button class="tab-btn" data-tab="add">
+                <i class="fas fa-plus"></i> Add Entry
+            </button>
+            <button class="tab-btn" data-tab="stats">
+                <i class="fas fa-chart-bar"></i> Statistics
+            </button>
+        </nav>
+
+        <main class="main-content">
+            <!-- Entries Tab -->
+            <div id="entries" class="tab-content active">
+                <div class="filters">
+                    <input type="text" id="beanFilter" placeholder="Filter by bean name..." class="filter-input">
+                    <select id="ratingFilter" class="filter-select">
+                        <option value="">All ratings</option>
+                        <option value="10">10</option>
+                        <option value="9">9</option>
+                        <option value="8">8</option>
+                        <option value="7">7</option>
+                        <option value="6">6</option>
+                        <option value="5">5</option>
+                        <option value="4">4</option>
+                        <option value="3">3</option>
+                        <option value="2">2</option>
+                        <option value="1">1</option>
+                    </select>
+                    <select id="roastFilter" class="filter-select">
+                        <option value="">All roast levels</option>
+                        <option value="Light">Light</option>
+                        <option value="Medium-Light">Medium-Light</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Medium-Dark">Medium-Dark</option>
+                        <option value="Dark">Dark</option>
+                    </select>
+                    <button id="clearFilters" class="btn-secondary">Clear Filters</button>
+                </div>
+                
+                <div id="entriesList" class="entries-grid">
+                    <!-- Entries will be loaded here -->
+                </div>
+                
+                <div class="pagination">
+                    <button id="prevPage" class="btn-secondary">Previous</button>
+                    <span id="pageInfo">Page 1</span>
+                    <button id="nextPage" class="btn-secondary">Next</button>
+                </div>
+            </div>
+
+            <!-- Add Entry Tab -->
+            <div id="add" class="tab-content">
+                <form id="espressoForm" class="espresso-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="beanName">Bean Name *</label>
+                            <input type="text" id="beanName" name="beanName" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="origin">Origin</label>
+                            <input type="text" id="origin" name="origin">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="roastLevel">Roast Level</label>
+                            <select id="roastLevel" name="roastLevel">
+                                <option value="Medium">Medium</option>
+                                <option value="Light">Light</option>
+                                <option value="Medium-Light">Medium-Light</option>
+                                <option value="Medium-Dark">Medium-Dark</option>
+                                <option value="Dark">Dark</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="grindSize">Grind Size (1-50) *</label>
+                            <input type="number" id="grindSize" name="grindSize" min="1" max="50" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dose">Dose (g) *</label>
+                            <input type="number" id="dose" name="dose" step="0.1" min="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="yield">Yield (g) *</label>
+                            <input type="number" id="yield" name="yield" step="0.1" min="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="extractionTime">Extraction Time (s) *</label>
+                            <input type="number" id="extractionTime" name="extractionTime" step="0.1" min="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="rating">Rating (1-10) *</label>
+                            <input type="number" id="rating" name="rating" min="1" max="10" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label for="flavors">Flavors</label>
+                        <input type="text" id="flavors" name="flavors" placeholder="e.g., chocolate, caramel, citrus">
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label for="notes">Notes</label>
+                        <textarea id="notes" name="notes" rows="4" placeholder="Additional notes about this espresso..."></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Save Entry</button>
+                        <button type="reset" class="btn-secondary">Reset</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Statistics Tab -->
+            <div id="stats" class="tab-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Entries</h3>
+                        <div id="totalEntries" class="stat-value">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Average Rating</h3>
+                        <div id="avgRating" class="stat-value">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Avg Extraction Time</h3>
+                        <div id="avgExtractionTime" class="stat-value">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Avg Dose</h3>
+                        <div id="avgDose" class="stat-value">-</div>
+                    </div>
+                </div>
+                
+                <div class="stats-section">
+                    <h3>Top Beans</h3>
+                    <div id="topBeans" class="stats-list">
+                        <!-- Top beans will be loaded here -->
+                    </div>
+                </div>
+                
+                <div class="stats-section">
+                    <h3>Top Origins</h3>
+                    <div id="topOrigins" class="stats-list">
+                        <!-- Top origins will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for editing entries -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Edit Espresso Entry</h2>
+            <form id="editForm" class="espresso-form">
+                <!-- Form fields will be populated dynamically -->
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
