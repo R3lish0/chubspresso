@@ -327,10 +327,12 @@ async function loadStats() {
         const response = await fetch(`${API_BASE_URL}/stats/summary`);
         const data = await response.json();
         
+        console.log('Stats API response:', data);
+        
         if (response.ok) {
             displayStats(data);
         } else {
-            console.error('Failed to load stats');
+            console.error('Failed to load stats:', data);
         }
     } catch (error) {
         console.error('Error loading stats:', error);
@@ -606,35 +608,53 @@ function updateBeanSelect(beans) {
 }
 
 function displayStats(data) {
-    const summary = data.summary || {};
-    const topBeans = data.topBeans || [];
-    const topRegions = data.topRegions || [];
-    
-    // Update summary stats
-    totalEntriesEl.textContent = summary.totalEntries || 0;
-    avgRatingEl.textContent = summary.avgRating ? summary.avgRating.toFixed(1) : 'N/A';
-    avgExtractionTimeEl.textContent = summary.avgExtractionTime ? summary.avgExtractionTime.toFixed(1) + 's' : 'N/A';
-    avgDoseEl.textContent = summary.avgDose ? summary.avgDose.toFixed(1) + 'g' : 'N/A';
-    
-    // Update top beans
-    topBeansEl.innerHTML = topBeans.length > 0 ? 
-        topBeans.map(bean => `
-            <div class="stat-item">
-                <span class="stat-item-name">${bean._id}</span>
-                <span class="stat-item-value">${bean.count} entries (${bean.avgRating.toFixed(1)} avg)</span>
-            </div>
-        `).join('') : 
-        '<div class="empty-state"><p>No beans found</p></div>';
-    
-    // Update top regions
-    topOriginsEl.innerHTML = topRegions.length > 0 ? 
-        topRegions.map(region => `
-            <div class="stat-item">
-                <span class="stat-item-name">${region._id || 'Unknown'}</span>
-                <span class="stat-item-value">${region.count} entries</span>
-            </div>
-        `).join('') : 
-        '<div class="empty-state"><p>No regions found</p></div>';
+    try {
+        console.log('displayStats called with data:', data);
+        
+        // Safety checks
+        if (!data || typeof data !== 'object') {
+            console.error('Invalid stats data:', data);
+            return;
+        }
+        
+        const summary = data.summary || {};
+        const topBeans = Array.isArray(data.topBeans) ? data.topBeans : [];
+        const topRegions = Array.isArray(data.topRegions) ? data.topRegions : [];
+        
+        console.log('Processed data - summary:', summary, 'topBeans:', topBeans, 'topRegions:', topRegions);
+        
+        // Update summary stats
+        if (totalEntriesEl) totalEntriesEl.textContent = summary.totalEntries || 0;
+        if (avgRatingEl) avgRatingEl.textContent = summary.avgRating ? summary.avgRating.toFixed(1) : 'N/A';
+        if (avgExtractionTimeEl) avgExtractionTimeEl.textContent = summary.avgExtractionTime ? summary.avgExtractionTime.toFixed(1) + 's' : 'N/A';
+        if (avgDoseEl) avgDoseEl.textContent = summary.avgDose ? summary.avgDose.toFixed(1) + 'g' : 'N/A';
+        
+        // Update top beans
+        if (topBeansEl) {
+            topBeansEl.innerHTML = topBeans.length > 0 ? 
+                topBeans.map(bean => `
+                    <div class="stat-item">
+                        <span class="stat-item-name">${bean._id || 'Unknown'}</span>
+                        <span class="stat-item-value">${bean.count || 0} entries (${bean.avgRating ? bean.avgRating.toFixed(1) : 'N/A'} avg)</span>
+                    </div>
+                `).join('') : 
+                '<div class="empty-state"><p>No beans found</p></div>';
+        }
+        
+        // Update top regions
+        if (topOriginsEl) {
+            topOriginsEl.innerHTML = topRegions.length > 0 ? 
+                topRegions.map(region => `
+                    <div class="stat-item">
+                        <span class="stat-item-name">${region._id || 'Unknown'}</span>
+                        <span class="stat-item-value">${region.count || 0} entries</span>
+                    </div>
+                `).join('') : 
+                '<div class="empty-state"><p>No regions found</p></div>';
+        }
+    } catch (error) {
+        console.error('Error in displayStats:', error);
+    }
 }
 
 function updatePagination(pagination) {
