@@ -227,6 +227,7 @@ function openBeanModal(bean = null) {
         document.getElementById('beanRegion').value = bean.region;
         document.getElementById('beanRoast').value = bean.roast;
         document.getElementById('beanDate').value = bean.date ? new Date(bean.date).toISOString().split('T')[0] : '';
+        document.getElementById('beanFlavors').value = bean.flavors || '';
     } else {
         beanForm.reset();
         document.getElementById('beanDate').value = new Date().toISOString().split('T')[0];
@@ -279,11 +280,6 @@ function populateEditForm(entry) {
                 <label for="editRating">Rating (1-10) *</label>
                 <input type="number" id="editRating" name="rating" value="${entry.rating}" min="1" max="10" required>
             </div>
-        </div>
-        
-        <div class="form-group full-width">
-            <label for="editFlavors">Flavors</label>
-            <input type="text" id="editFlavors" name="flavors" value="${entry.flavors || ''}" placeholder="e.g., chocolate, caramel, citrus">
         </div>
         
         <div class="form-group full-width">
@@ -555,8 +551,8 @@ function displayEntries(entries, pagination) {
                 <span>Time: <strong>${entry.extractionTime}s</strong></span>
             </div>
             
-            ${entry.flavors ? `<div style="margin-bottom: 10px; font-size: 0.9rem; color: #718096;">
-                <strong>Flavors:</strong> ${entry.flavors}
+            ${entry.bean && entry.bean.flavors ? `<div style="margin-bottom: 10px; font-size: 0.9rem; color: #718096;">
+                <strong>Flavors:</strong> ${entry.bean.flavors}
             </div>` : ''}
             
             ${entry.notes ? `<div style="margin-bottom: 15px; font-size: 0.9rem; color: #718096; font-style: italic;">
@@ -599,6 +595,9 @@ function displayBeans(beans) {
                         <span>Roast: <strong>${bean.roast}</strong></span>
                         <span>Date: <strong>${new Date(bean.date).toLocaleDateString()}</strong></span>
                     </div>
+                    ${bean.flavors ? `<div style="margin-top: 10px; font-size: 0.9rem; color: #718096;">
+                        <strong>Flavors:</strong> ${bean.flavors}
+                    </div>` : ''}
                 </div>
             </div>
             
