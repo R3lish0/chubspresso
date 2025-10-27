@@ -103,7 +103,7 @@ function initializeFilters() {
     beansNameFilter.addEventListener('input', debounce(applyBeansFilters, 300));
     beansRegionFilter.addEventListener('input', debounce(applyBeansFilters, 300));
     beansRoastFilter.addEventListener('input', debounce(applyBeansFilters, 300));
-    clearBeansFilters.addEventListener('click', clearBeansFilters);
+    clearBeansFilters.addEventListener('click', clearBeansFiltersHandler);
 }
 
 function applyFilters() {
@@ -132,7 +132,7 @@ function applyBeansFilters() {
     loadBeans();
 }
 
-function clearBeansFilters() {
+function clearBeansFiltersHandler() {
     beansNameFilter.value = '';
     beansRegionFilter.value = '';
     beansRoastFilter.value = '';
@@ -165,10 +165,34 @@ function initializeModal() {
 }
 
 function initializeBeanModal() {
-    addBeanBtn.addEventListener('click', openBeanModal);
-    addNewBeanBtn.addEventListener('click', openBeanModal);
-    document.getElementById('closeBeanModal').addEventListener('click', closeBeanModal);
-    beanForm.addEventListener('submit', handleBeanSubmit);
+    console.log('Initializing bean modal...');
+    console.log('addBeanBtn:', addBeanBtn);
+    console.log('addNewBeanBtn:', addNewBeanBtn);
+    console.log('beanModal:', beanModal);
+    console.log('beanForm:', beanForm);
+    
+    if (addBeanBtn) {
+        addBeanBtn.addEventListener('click', () => {
+            console.log('Add bean button clicked');
+            openBeanModal();
+        });
+    }
+    
+    if (addNewBeanBtn) {
+        addNewBeanBtn.addEventListener('click', () => {
+            console.log('Add new bean button clicked');
+            openBeanModal();
+        });
+    }
+    
+    const closeBeanModalBtn = document.getElementById('closeBeanModal');
+    if (closeBeanModalBtn) {
+        closeBeanModalBtn.addEventListener('click', closeBeanModal);
+    }
+    
+    if (beanForm) {
+        beanForm.addEventListener('submit', handleBeanSubmit);
+    }
     
     window.addEventListener('click', (event) => {
         if (event.target === beanModal) {
@@ -190,6 +214,7 @@ function closeEditModal() {
 }
 
 function openBeanModal(bean = null) {
+    console.log('openBeanModal called with bean:', bean);
     editingBeanId = bean ? bean._id : null;
     document.getElementById('beanModalTitle').textContent = bean ? 'Edit Bean' : 'Add New Bean';
     
@@ -203,6 +228,7 @@ function openBeanModal(bean = null) {
         document.getElementById('beanDate').value = new Date().toISOString().split('T')[0];
     }
     
+    console.log('Setting modal display to block');
     beanModal.style.display = 'block';
 }
 
