@@ -24,6 +24,9 @@
             <button class="tab-btn" data-tab="add">
                 <i class="fas fa-plus"></i> Add Entry
             </button>
+            <button class="tab-btn" data-tab="beans">
+                <i class="fas fa-seedling"></i> Beans
+            </button>
             <button class="tab-btn" data-tab="stats">
                 <i class="fas fa-chart-bar"></i> Statistics
             </button>
@@ -34,6 +37,8 @@
             <div id="entries" class="tab-content active">
                 <div class="filters">
                     <input type="text" id="beanFilter" placeholder="Filter by bean name..." class="filter-input">
+                    <input type="text" id="regionFilter" placeholder="Filter by region..." class="filter-input">
+                    <input type="text" id="roastFilter" placeholder="Filter by roast..." class="filter-input">
                     <select id="ratingFilter" class="filter-select">
                         <option value="">All ratings</option>
                         <option value="10">10</option>
@@ -46,14 +51,6 @@
                         <option value="3">3</option>
                         <option value="2">2</option>
                         <option value="1">1</option>
-                    </select>
-                    <select id="roastFilter" class="filter-select">
-                        <option value="">All roast levels</option>
-                        <option value="Light">Light</option>
-                        <option value="Medium-Light">Medium-Light</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Medium-Dark">Medium-Dark</option>
-                        <option value="Dark">Dark</option>
                     </select>
                     <button id="clearFilters" class="btn-secondary">Clear Filters</button>
                 </div>
@@ -74,24 +71,13 @@
                 <form id="espressoForm" class="espresso-form">
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="beanName">Bean Name *</label>
-                            <input type="text" id="beanName" name="beanName" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="origin">Origin</label>
-                            <input type="text" id="origin" name="origin">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="roastLevel">Roast Level</label>
-                            <select id="roastLevel" name="roastLevel">
-                                <option value="Medium">Medium</option>
-                                <option value="Light">Light</option>
-                                <option value="Medium-Light">Medium-Light</option>
-                                <option value="Medium-Dark">Medium-Dark</option>
-                                <option value="Dark">Dark</option>
+                            <label for="bean">Bean *</label>
+                            <select id="bean" name="bean" required>
+                                <option value="">Select a bean...</option>
                             </select>
+                            <button type="button" id="addBeanBtn" class="btn-secondary" style="margin-top: 5px;">
+                                <i class="fas fa-plus"></i> Add New Bean
+                            </button>
                         </div>
                         
                         <div class="form-group">
@@ -135,6 +121,27 @@
                         <button type="reset" class="btn-secondary">Reset</button>
                     </div>
                 </form>
+            </div>
+
+            <!-- Beans Tab -->
+            <div id="beans" class="tab-content">
+                <div class="beans-header">
+                    <h2>Bean Management</h2>
+                    <button id="addNewBeanBtn" class="btn-primary">
+                        <i class="fas fa-plus"></i> Add New Bean
+                    </button>
+                </div>
+                
+                <div class="beans-filters">
+                    <input type="text" id="beansNameFilter" placeholder="Filter by name..." class="filter-input">
+                    <input type="text" id="beansRegionFilter" placeholder="Filter by region..." class="filter-input">
+                    <input type="text" id="beansRoastFilter" placeholder="Filter by roast..." class="filter-input">
+                    <button id="clearBeansFilters" class="btn-secondary">Clear Filters</button>
+                </div>
+                
+                <div id="beansList" class="beans-grid">
+                    <!-- Beans will be loaded here -->
+                </div>
             </div>
 
             <!-- Statistics Tab -->
@@ -182,6 +189,42 @@
             <h2>Edit Espresso Entry</h2>
             <form id="editForm" class="espresso-form">
                 <!-- Form fields will be populated dynamically -->
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for adding/editing beans -->
+    <div id="beanModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeBeanModal">&times;</span>
+            <h2 id="beanModalTitle">Add New Bean</h2>
+            <form id="beanForm" class="espresso-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="beanName">Bean Name *</label>
+                        <input type="text" id="beanName" name="name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="beanRegion">Region *</label>
+                        <input type="text" id="beanRegion" name="region" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="beanRoast">Roast *</label>
+                        <input type="text" id="beanRoast" name="roast" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="beanDate">Date</label>
+                        <input type="date" id="beanDate" name="date">
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save Bean</button>
+                    <button type="button" class="btn-secondary" onclick="closeBeanModal()">Cancel</button>
+                </div>
             </form>
         </div>
     </div>

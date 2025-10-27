@@ -1,10 +1,13 @@
 // API Configuration
-const API_BASE_URL = 'http://192.168.68.61:3000/api/espresso';
+const API_BASE_URL = 'http://192.168.68.57:3000/api/espresso';
+const BEANS_API_URL = 'http://192.168.68.57:3000/api/beans';
 
 // State management
 let currentPage = 1;
 let currentFilters = {};
 let editingEntryId = null;
+let editingBeanId = null;
+let beansList = [];
 
 // DOM Elements
 const tabButtons = document.querySelectorAll('.tab-btn');
@@ -17,9 +20,22 @@ const closeModal = document.querySelector('.close');
 
 // Filter elements
 const beanFilter = document.getElementById('beanFilter');
-const ratingFilter = document.getElementById('ratingFilter');
+const regionFilter = document.getElementById('regionFilter');
 const roastFilter = document.getElementById('roastFilter');
+const ratingFilter = document.getElementById('ratingFilter');
 const clearFiltersBtn = document.getElementById('clearFilters');
+
+// Bean elements
+const beanSelect = document.getElementById('bean');
+const addBeanBtn = document.getElementById('addBeanBtn');
+const addNewBeanBtn = document.getElementById('addNewBeanBtn');
+const beanModal = document.getElementById('beanModal');
+const beanForm = document.getElementById('beanForm');
+const beansListEl = document.getElementById('beansList');
+const beansNameFilter = document.getElementById('beansNameFilter');
+const beansRegionFilter = document.getElementById('beansRegionFilter');
+const beansRoastFilter = document.getElementById('beansRoastFilter');
+const clearBeansFilters = document.getElementById('clearBeansFilters');
 
 // Pagination elements
 const prevPageBtn = document.getElementById('prevPage');
@@ -40,6 +56,8 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeFilters();
     initializePagination();
     initializeModal();
+    initializeBeanModal();
+    loadBeans();
     loadEntries();
     loadStats();
 });
@@ -66,6 +84,8 @@ function switchTab(tabName) {
     // Load data for the active tab
     if (tabName === 'entries') {
         loadEntries();
+    } else if (tabName === 'beans') {
+        loadBeans();
     } else if (tabName === 'stats') {
         loadStats();
     }
@@ -74,17 +94,25 @@ function switchTab(tabName) {
 // Filter functionality
 function initializeFilters() {
     beanFilter.addEventListener('input', debounce(applyFilters, 300));
+    regionFilter.addEventListener('input', debounce(applyFilters, 300));
+    roastFilter.addEventListener('input', debounce(applyFilters, 300));
     ratingFilter.addEventListener('change', applyFilters);
-    roastFilter.addEventListener('change', applyFilters);
     clearFiltersBtn.addEventListener('click', clearFilters);
+    
+    // Bean filters
+    beansNameFilter.addEventListener('input', debounce(applyBeansFilters, 300));
+    beansRegionFilter.addEventListener('input', debounce(applyBeansFilters, 300));
+    beansRoastFilter.addEventListener('input', debounce(applyBeansFilters, 300));
+    clearBeansFilters.addEventListener('click', clearBeansFilters);
 }
 
 function applyFilters() {
     currentFilters = {};
     
     if (beanFilter.value) currentFilters.beanName = beanFilter.value;
+    if (regionFilter.value) currentFilters.region = regionFilter.value;
+    if (roastFilter.value) currentFilters.roast = roastFilter.value;
     if (ratingFilter.value) currentFilters.rating = ratingFilter.value;
-    if (roastFilter.value) currentFilters.roastLevel = roastFilter.value;
     
     currentPage = 1;
     loadEntries();
@@ -92,11 +120,23 @@ function applyFilters() {
 
 function clearFilters() {
     beanFilter.value = '';
-    ratingFilter.value = '';
+    regionFilter.value = '';
     roastFilter.value = '';
+    ratingFilter.value = '';
     currentFilters = {};
     currentPage = 1;
     loadEntries();
+}
+
+function applyBeansFilters() {
+    loadBeans();
+}
+
+function clearBeansFilters() {
+    beansNameFilter.value = '';
+    beansRegionFilter.value = '';
+    beansRoastFilter.value = '';
+    loadBeans();
 }
 
 // Pagination functionality
@@ -124,6 +164,19 @@ function initializeModal() {
     });
 }
 
+function initializeBeanModal() {
+    addBeanBtn.addEventListener('click', openBeanModal);
+    addNewBeanBtn.addEventListener('click', openBeanModal);
+    document.getElementById('closeBeanModal').addEventListener('click', closeBeanModal);
+    beanForm.addEventListener('submit', handleBeanSubmit);
+    
+    window.addEventListener('click', (event) => {
+        if (event.target === beanModal) {
+            closeBeanModal();
+        }
+    });
+}
+
 function openEditModal(entry) {
     editingEntryId = entry._id;
     populateEditForm(entry);
@@ -136,27 +189,39 @@ function closeEditModal() {
     editForm.reset();
 }
 
+function openBeanModal(bean = null) {
+    editingBeanId = bean ? bean._id : null;
+    document.getElementById('beanModalTitle').textContent = bean ? 'Edit Bean' : 'Add New Bean';
+    
+    if (bean) {
+        document.getElementById('beanName').value = bean.name;
+        document.getElementById('beanRegion').value = bean.region;
+        document.getElementById('beanRoast').value = bean.roast;
+        document.getElementById('beanDate').value = bean.date ? new Date(bean.date).toISOString().split('T')[0] : '';
+    } else {
+        beanForm.reset();
+        document.getElementById('beanDate').value = new Date().toISOString().split('T')[0];
+    }
+    
+    beanModal.style.display = 'block';
+}
+
+function closeBeanModal() {
+    beanModal.style.display = 'none';
+    editingBeanId = null;
+    beanForm.reset();
+}
+
 function populateEditForm(entry) {
     editForm.innerHTML = `
         <div class="form-grid">
             <div class="form-group">
-                <label for="editBeanName">Bean Name *</label>
-                <input type="text" id="editBeanName" name="beanName" value="${entry.beanName}" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="editOrigin">Origin</label>
-                <input type="text" id="editOrigin" name="origin" value="${entry.origin || ''}">
-            </div>
-            
-            <div class="form-group">
-                <label for="editRoastLevel">Roast Level</label>
-                <select id="editRoastLevel" name="roastLevel">
-                    <option value="Light" ${entry.roastLevel === 'Light' ? 'selected' : ''}>Light</option>
-                    <option value="Medium-Light" ${entry.roastLevel === 'Medium-Light' ? 'selected' : ''}>Medium-Light</option>
-                    <option value="Medium" ${entry.roastLevel === 'Medium' ? 'selected' : ''}>Medium</option>
-                    <option value="Medium-Dark" ${entry.roastLevel === 'Medium-Dark' ? 'selected' : ''}>Medium-Dark</option>
-                    <option value="Dark" ${entry.roastLevel === 'Dark' ? 'selected' : ''}>Dark</option>
+                <label for="editBean">Bean *</label>
+                <select id="editBean" name="bean" required>
+                    <option value="">Select a bean...</option>
+                    ${beansList.map(bean => 
+                        `<option value="${bean._id}" ${entry.bean && entry.bean._id === bean._id ? 'selected' : ''}>${bean.name} (${bean.region})</option>`
+                    ).join('')}
                 </select>
             </div>
             
@@ -243,6 +308,100 @@ async function loadStats() {
         }
     } catch (error) {
         console.error('Error loading stats:', error);
+    }
+}
+
+// Bean API Functions
+async function loadBeans() {
+    try {
+        const params = new URLSearchParams();
+        if (beansNameFilter.value) params.append('name', beansNameFilter.value);
+        if (beansRegionFilter.value) params.append('region', beansRegionFilter.value);
+        if (beansRoastFilter.value) params.append('roast', beansRoastFilter.value);
+        
+        const response = await fetch(`${BEANS_API_URL}?${params}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+            beansList = data.beans;
+            displayBeans(data.beans);
+            updateBeanSelect(data.beans);
+        } else {
+            showError(beansListEl, 'Failed to load beans');
+        }
+    } catch (error) {
+        console.error('Error loading beans:', error);
+        showError(beansListEl, 'Failed to load beans');
+    }
+}
+
+async function createBean(formData) {
+    try {
+        const response = await fetch(BEANS_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        if (response.ok) {
+            showSuccess('Bean created successfully!');
+            closeBeanModal();
+            loadBeans();
+        } else {
+            const errorData = await response.json();
+            showError(null, `Failed to create bean: ${errorData.error || 'Unknown error'}`);
+        }
+    } catch (error) {
+        console.error('Error creating bean:', error);
+        showError(null, 'Failed to create bean');
+    }
+}
+
+async function updateBean(id, formData) {
+    try {
+        const response = await fetch(`${BEANS_API_URL}/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        if (response.ok) {
+            showSuccess('Bean updated successfully!');
+            closeBeanModal();
+            loadBeans();
+        } else {
+            const errorData = await response.json();
+            showError(null, `Failed to update bean: ${errorData.error || 'Unknown error'}`);
+        }
+    } catch (error) {
+        console.error('Error updating bean:', error);
+        showError(null, 'Failed to update bean');
+    }
+}
+
+async function deleteBean(id) {
+    if (!confirm('Are you sure you want to delete this bean?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${BEANS_API_URL}/${id}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            showSuccess('Bean deleted successfully!');
+            loadBeans();
+        } else {
+            showError(null, 'Failed to delete bean');
+        }
+    } catch (error) {
+        console.error('Error deleting bean:', error);
+        showError(null, 'Failed to delete bean');
     }
 }
 
@@ -333,7 +492,7 @@ function displayEntries(entries, pagination) {
         <div class="entry-card">
             <div class="entry-header">
                 <div>
-                    <div class="entry-title">${entry.beanName}</div>
+                    <div class="entry-title">${entry.bean ? entry.bean.name : 'Unknown Bean'}</div>
                     <div class="entry-rating">
                         <i class="fas fa-star"></i>
                         ${entry.rating}/10
@@ -342,8 +501,8 @@ function displayEntries(entries, pagination) {
             </div>
             
             <div class="entry-meta">
-                <span>Origin: <strong>${entry.origin || 'N/A'}</strong></span>
-                <span>Roast: <strong>${entry.roastLevel}</strong></span>
+                <span>Region: <strong>${entry.bean ? entry.bean.region : 'N/A'}</strong></span>
+                <span>Roast: <strong>${entry.bean ? entry.bean.roast : 'N/A'}</strong></span>
                 <span>Dose: <strong>${entry.dose}g</strong></span>
                 <span>Yield: <strong>${entry.yield}g</strong></span>
                 <span>Grind: <strong>${entry.grindSize}</strong></span>
@@ -372,10 +531,52 @@ function displayEntries(entries, pagination) {
     updatePagination(pagination);
 }
 
+function displayBeans(beans) {
+    if (beans.length === 0) {
+        beansListEl.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-seedling"></i>
+                <h3>No beans found</h3>
+                <p>Start by adding your first bean!</p>
+            </div>
+        `;
+        return;
+    }
+    
+    beansListEl.innerHTML = beans.map(bean => `
+        <div class="entry-card">
+            <div class="entry-header">
+                <div>
+                    <div class="entry-title">${bean.name}</div>
+                    <div class="entry-meta">
+                        <span>Region: <strong>${bean.region}</strong></span>
+                        <span>Roast: <strong>${bean.roast}</strong></span>
+                        <span>Date: <strong>${new Date(bean.date).toLocaleDateString()}</strong></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="entry-actions">
+                <button class="edit-btn" onclick="openBeanModal(${JSON.stringify(bean).replace(/"/g, '&quot;')})">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="delete-btn" onclick="deleteBean('${bean._id}')">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function updateBeanSelect(beans) {
+    beanSelect.innerHTML = '<option value="">Select a bean...</option>' + 
+        beans.map(bean => `<option value="${bean._id}">${bean.name} (${bean.region})</option>`).join('');
+}
+
 function displayStats(data) {
     const summary = data.summary;
     const topBeans = data.topBeans;
-    const topOrigins = data.topOrigins;
+    const topRegions = data.topRegions;
     
     // Update summary stats
     totalEntriesEl.textContent = summary.totalEntries || 0;
@@ -393,15 +594,15 @@ function displayStats(data) {
         `).join('') : 
         '<div class="empty-state"><p>No beans found</p></div>';
     
-    // Update top origins
-    topOriginsEl.innerHTML = topOrigins.length > 0 ? 
-        topOrigins.map(origin => `
+    // Update top regions
+    topOriginsEl.innerHTML = topRegions.length > 0 ? 
+        topRegions.map(region => `
             <div class="stat-item">
-                <span class="stat-item-name">${origin._id || 'Unknown'}</span>
-                <span class="stat-item-value">${origin.count} entries</span>
+                <span class="stat-item-name">${region._id || 'Unknown'}</span>
+                <span class="stat-item-value">${region.count} entries</span>
             </div>
         `).join('') : 
-        '<div class="empty-state"><p>No origins found</p></div>';
+        '<div class="empty-state"><p>No regions found</p></div>';
 }
 
 function updatePagination(pagination) {
@@ -447,6 +648,29 @@ async function handleEditSubmit(e) {
     }
     
     await updateEntry(editingEntryId, entryData);
+}
+
+async function handleBeanSubmit(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(beanForm);
+    const beanData = {};
+    
+    for (let [key, value] of formData.entries()) {
+        if (value !== '') {
+            if (key === 'date') {
+                beanData[key] = new Date(value);
+            } else {
+                beanData[key] = value;
+            }
+        }
+    }
+    
+    if (editingBeanId) {
+        await updateBean(editingBeanId, beanData);
+    } else {
+        await createBean(beanData);
+    }
 }
 
 // Utility Functions
@@ -512,4 +736,7 @@ function debounce(func, wait) {
 
 // Make functions globally available for onclick handlers
 window.openEditModal = openEditModal;
-window.deleteEntry = deleteEntry; 
+window.deleteEntry = deleteEntry;
+window.openBeanModal = openBeanModal;
+window.closeBeanModal = closeBeanModal;
+window.deleteBean = deleteBean; 
