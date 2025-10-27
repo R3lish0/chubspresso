@@ -59,7 +59,11 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeBeanModal();
     loadBeans();
     loadEntries();
-    loadStats();
+    
+    // Load stats asynchronously without blocking other functionality
+    loadStats().catch(error => {
+        console.warn('Stats loading failed, but continuing with app initialization:', error);
+    });
 });
 
 // Tab functionality
@@ -324,18 +328,26 @@ async function loadEntries() {
 
 async function loadStats() {
     try {
+        console.log('Loading stats from:', `${API_BASE_URL}/stats/summary`);
         const response = await fetch(`${API_BASE_URL}/stats/summary`);
-        const data = await response.json();
         
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
         console.log('Stats API response:', data);
         
-        if (response.ok) {
-            displayStats(data);
-        } else {
-            console.error('Failed to load stats:', data);
-        }
+        displayStats(data);
     } catch (error) {
-        console.error('Error loading stats:', error);
+        console.warn('Could not load stats (API might not be running):', error.message);
+        // Set default values for stats elements
+        if (totalEntriesEl) totalEntriesEl.textContent = '0';
+        if (avgRatingEl) avgRatingEl.textContent = 'N/A';
+        if (avgExtractionTimeEl) avgExtractionTimeEl.textContent = 'N/A';
+        if (avgDoseEl) avgDoseEl.textContent = 'N/A';
+        if (topBeansEl) topBeansEl.innerHTML = '<div class="empty-state"><p>No data available</p></div>';
+        if (topOriginsEl) topOriginsEl.innerHTML = '<div class="empty-state"><p>No data available</p></div>';
     }
 }
 
