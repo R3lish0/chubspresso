@@ -337,6 +337,7 @@ async function loadBeans() {
 
 async function createBean(formData) {
     try {
+        console.log('Creating bean with data:', formData);
         const response = await fetch(BEANS_API_URL, {
             method: 'POST',
             headers: {
@@ -345,12 +346,17 @@ async function createBean(formData) {
             body: JSON.stringify(formData)
         });
         
+        console.log('Response status:', response.status);
+        
         if (response.ok) {
+            const result = await response.json();
+            console.log('Bean created successfully:', result);
             showSuccess('Bean created successfully!');
             closeBeanModal();
             loadBeans();
         } else {
             const errorData = await response.json();
+            console.error('Error response:', errorData);
             showError(null, `Failed to create bean: ${errorData.error || 'Unknown error'}`);
         }
     } catch (error) {
@@ -574,9 +580,9 @@ function updateBeanSelect(beans) {
 }
 
 function displayStats(data) {
-    const summary = data.summary;
-    const topBeans = data.topBeans;
-    const topRegions = data.topRegions;
+    const summary = data.summary || {};
+    const topBeans = data.topBeans || [];
+    const topRegions = data.topRegions || [];
     
     // Update summary stats
     totalEntriesEl.textContent = summary.totalEntries || 0;
@@ -664,6 +670,12 @@ async function handleBeanSubmit(e) {
                 beanData[key] = value;
             }
         }
+    }
+    
+    // Validate required fields
+    if (!beanData.name || !beanData.region || !beanData.roast) {
+        showError(null, 'Please fill in all required fields (Name, Region, Roast)');
+        return;
     }
     
     if (editingBeanId) {
